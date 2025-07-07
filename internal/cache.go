@@ -15,8 +15,8 @@ type Cache struct {
 	items map[string]cacheItem
 }
 
-func (cache *Cache) Set(key string, value []byte, expiration time.Duration) {
-	expiresAt := nowUTC().Add(expiration)
+func (cache *Cache) Set(key string, value []byte, expiresIn time.Duration) {
+	expiresAt := nowUTC().Add(expiresIn)
 	cache.items[key] = cacheItem{value, expiresAt}
 }
 
