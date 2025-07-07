@@ -15,6 +15,11 @@ type Cache struct {
 	items map[string]cacheItem
 }
 
+func NewCache() *Cache {
+	emptyItems := make(map[string]cacheItem)
+	return &Cache{emptyItems}
+}
+
 func (cache *Cache) Set(key string, value []byte, expiresIn time.Duration) {
 	expiresAt := nowUTC().Add(expiresIn)
 	cache.items[key] = cacheItem{value, expiresAt}
@@ -22,10 +27,10 @@ func (cache *Cache) Set(key string, value []byte, expiresIn time.Duration) {
 
 // hasValid item is true if and only if the item is in the cache, and it has not
 // expired yet
-func (cache *Cache) Get(key string) (item cacheItem, hasValidItem bool) {
+func (cache *Cache) Get(key string) (value []byte, isValidItem bool) {
 	item, hasItem := cache.items[key]
 	if hasItem && item.expiresAt.After(nowUTC()) {
-		hasValidItem = true
+		isValidItem = true
 	}
-	return item, hasValidItem
+	return item.value, isValidItem
 }
