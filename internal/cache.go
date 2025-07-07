@@ -1,10 +1,10 @@
 package internal
 
-import "time"
+import (
+	"time"
 
-func nowUTC() time.Time {
-	return time.Now().UTC()
-}
+	"github.com/Jswig/gomemcached/internal/util"
+)
 
 type cacheItem struct {
 	value     []byte
@@ -21,7 +21,7 @@ func NewCache() *Cache {
 }
 
 func (cache *Cache) Set(key string, value []byte, expiresIn time.Duration) {
-	expiresAt := nowUTC().Add(expiresIn)
+	expiresAt := util.NowUTC().Add(expiresIn)
 	cache.items[key] = cacheItem{value, expiresAt}
 }
 
@@ -29,7 +29,7 @@ func (cache *Cache) Set(key string, value []byte, expiresIn time.Duration) {
 // expired yet
 func (cache *Cache) Get(key string) (value []byte, isValidItem bool) {
 	item, hasItem := cache.items[key]
-	if hasItem && item.expiresAt.After(nowUTC()) {
+	if hasItem && item.expiresAt.After(util.NowUTC()) {
 		isValidItem = true
 	}
 	return item.value, isValidItem
