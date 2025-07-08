@@ -4,6 +4,8 @@ import (
 	"slices"
 	"testing"
 	"time"
+
+	"github.com/Jswig/gomemcached/internal/util"
 )
 
 func TestCache(t *testing.T) {
@@ -14,25 +16,27 @@ func TestCache(t *testing.T) {
 		assertItemInvalid(t, isValidItem)
 	})
 
-	t.Run("put one item in the cache then retrieve it before it expires", func(t *testing.T) {
-		cache := NewCache()
-		value := []byte("hi jeff")
-		key := "greeting"
+	t.Run(
+		"set one item in the cache then get it before it expires",
+		func(t *testing.T) {
+			cache := NewCache()
+			value := []byte("hi jeff")
+			key := "greeting"
+			expiresAt := util.NowUTC().Add(time.Hour)
+			cache.Set(key, value, expiresAt)
+			gotValue, isValidItem := cache.Get(key)
 
-		cache.Set(key, value, time.Hour)
-		gotValue, isValidItem := cache.Get(key)
+			assertItemValid(t, isValidItem)
+			assertItemValue(t, gotValue, value)
+		})
 
-		assertItemValid(t, isValidItem)
-		assertItemValue(t, gotValue, value)
-	})
-
-	t.Run("put one item in the cache then retrieve it after it expires", func(t *testing.T) {
+	t.Run("set one item in the cache then get it after it expires", func(t *testing.T) {
 		cache := NewCache()
 		value := []byte("hi rob")
 		key := "greeting"
 		expiresIn := time.Millisecond
-
-		cache.Set(key, value, expiresIn)
+		expiresAt := util.NowUTC().Add(expiresIn)
+		cache.Set(key, value, expiresAt)
 		// sleep to make sure the cache expires
 		time.Sleep(10 * expiresIn)
 		_, isValidItem := cache.Get(key)
@@ -40,14 +44,16 @@ func TestCache(t *testing.T) {
 		assertItemInvalid(t, isValidItem)
 	})
 
-	t.Run("put one item in cache, replace the same key then retrieve it", func(t *testing.T) {
+	t.Run("set one item in cache, set it again then get it", func(t *testing.T) {
 		cache := NewCache()
 		value1 := []byte("hi clara")
 		key := "greeting"
 		value2 := []byte("hi bradley")
-		
-		cache.Set(key, value1, time.Hour)
-		cache.Set(key, value2, time.Hour)
+
+		expiresAt := util.NowUTC().Add(time.Hour)
+
+		cache.Set(key, value1, expiresAt)
+		cache.Set(key, value2, expiresAt)
 		gotValue, isValidItem := cache.Get(key)
 
 		assertItemValid(t, isValidItem)
