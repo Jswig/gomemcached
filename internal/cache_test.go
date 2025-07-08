@@ -13,7 +13,7 @@ func TestCache(t *testing.T) {
 		cache := NewCache()
 		_, isValidItem := cache.Get("my_key")
 
-		assertItemInvalid(t, isValidItem)
+		assertEqual(t, isValidItem, false)
 	})
 
 	t.Run(
@@ -26,20 +26,20 @@ func TestCache(t *testing.T) {
 			cache.Set(key, value, expiresAt)
 			gotValue, isValidItem := cache.Get(key)
 
-			assertItemValid(t, isValidItem)
-			assertItemValue(t, gotValue, value)
+			assertEqual(t, isValidItem, true)
+			assertItemValueEqual(t, gotValue, value)
 		})
 
 	t.Run("set an item in the cache with no expiration then get it", func(t *testing.T) {
 		cache := NewCache()
 		value := []byte("hey leslie")
 		key := "greeting"
-		cache.Set(key, value, util.ZeroTime())
+		cache.Set(key, value, NeverExpires())
 
 		gotValue, isValidItem := cache.Get(key)
 
-		assertItemValid(t, isValidItem)
-		assertItemValue(t, gotValue, value)
+		assertEqual(t, isValidItem, true)
+		assertItemValueEqual(t, gotValue, value)
 	})
 
 	t.Run("set an item in the cache then get it after it expires", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestCache(t *testing.T) {
 		time.Sleep(10 * expiresIn)
 		_, isValidItem := cache.Get(key)
 
-		assertItemInvalid(t, isValidItem)
+		assertEqual(t, isValidItem, false)
 	})
 
 	t.Run("set one item in cache, set it again then get it", func(t *testing.T) {
@@ -62,34 +62,74 @@ func TestCache(t *testing.T) {
 		key := "greeting"
 		value2 := []byte("hi bradley")
 
-		expiresAt := util.NowUTC().Add(time.Hour)
-
-		cache.Set(key, value1, expiresAt)
-		cache.Set(key, value2, expiresAt)
+		cache.Set(key, value1, NeverExpires())
+		cache.Set(key, value2, NeverExpires())
 		gotValue, isValidItem := cache.Get(key)
 
-		assertItemValid(t, isValidItem)
-		assertItemValue(t, gotValue, value2)
+		assertEqual(t, isValidItem, true)
+		assertItemValueEqual(t, gotValue, value2)
+	})
+
+	t.Run("add a key not yet in the cache", func(t *testing.T) {
+		cache := NewCache()
+		key := "greeting"
+		value := []byte("hello, friend")
+
+		wasAdded := cache.Add(key, value, NeverExpires())
+		assertEqual(t, wasAdded, true)
+		gotValue, isValid := cache.Get(key)
+		assertEqual(t, isValid, true)
+		assertItemValueEqual(t, gotValue, value)
+	})
+
+	t.Run("add a key aready in cache", func(t *testing.T) {
+		cache := NewCache()
+		key := "greeting"
+		value1 := []byte("hello, fiend")
+		value2 := []byte("hi, my enemy")
+
+		cache.Set(key, value1, NeverExpires())
+		wasAdded := cache.Add(key, value2, NeverExpires())
+		assertEqual(t, wasAdded, false)
+
+		gotValue, _ := cache.Get(key)
+		assertItemValueEqual(t, gotValue, value1)
+	})
+
+	t.Run("replace a key not yet in cache", func(t *testing.T) {
+		cache := NewCache()
+		key := "greeting"
+		value := []byte("hello, brother")
+
+		wasReplaced := cache.Replace(key, value, NeverExpires())
+		assertEqual(t, wasReplaced, false)
+	})
+
+	t.Run("replace a key already in cache", func(t *testing.T) {
+		cache := NewCache()
+		key := "greeting"
+		value1 := []byte("hello, brother")
+		value2 := []byte("hellow, sister")
+
+		cache.Set(key, value1, NeverExpires())
+		wasReplaced := cache.Replace(key, value2, NeverExpires())
+		assertEqual(t, wasReplaced, true)
+
+		gotValue, _ := cache.Get(key)
+		assertItemValueEqual(t, gotValue, value2)
 	})
 }
 
-func assertItemInvalid(t *testing.T, isValid bool) {
+func assertEqual[T comparable](t *testing.T, got T, want T) {
 	t.Helper()
-	if isValid {
-		t.Fatal("item is valid, wanted invalid")
+	if got != want {
+		t.Errorf("got %v, wanted %v", got, want)
 	}
 }
 
-func assertItemValid(t *testing.T, isValid bool) {
-	t.Helper()
-	if !isValid {
-		t.Fatal("item is invalid, wanted valid")
-	}
-}
-
-func assertItemValue(t *testing.T, got []byte, want []byte) {
+func assertItemValueEqual(t *testing.T, got []byte, want []byte) {
 	t.Helper()
 	if !slices.Equal(got, want) {
-		t.Errorf("got %s want %s", got, want)
+		t.Errorf("got %s wanted %s", got, want)
 	}
 }

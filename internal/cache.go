@@ -8,8 +8,14 @@ import (
 )
 
 type cacheItem struct {
-	value     []byte
+	value []byte
+	// Zero time here represents an item that never expires
 	expiresAt time.Time
+}
+
+func NeverExpires() time.Time {
+	// Zero time represents an item that never expires
+	return time.Time{}
 }
 
 type Cache struct {
@@ -25,7 +31,7 @@ func NewCache() *Cache {
 // checks if a cache item has expired
 func isValid(item cacheItem) bool {
 	// zero time means that the item should never expire
-	if item.expiresAt.IsZero() {
+	if item.expiresAt.Equal(NeverExpires()) {
 		return true
 	} else {
 		return item.expiresAt.After(util.NowUTC())

@@ -11,10 +11,3 @@ func TestNowUTC(t *testing.T) {
 		t.Errorf("got location %v, want UTC", result.Location())
 	}
 }
-
-func TestZeroTime(t *testing.T) {
-	result := ZeroTime()
-	if !result.IsZero() {
-		t.Errorf("got time %v, expected zero time", result)
-	}
-}

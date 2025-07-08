@@ -1,3 +1,3 @@
 module github.com/Jswig/gomemcached
 
-go 1.22.2
+go 1.24.5
