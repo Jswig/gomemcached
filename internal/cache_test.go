@@ -30,7 +30,19 @@ func TestCache(t *testing.T) {
 			assertItemValue(t, gotValue, value)
 		})
 
-	t.Run("set one item in the cache then get it after it expires", func(t *testing.T) {
+	t.Run("set an item in the cache with no expiration then get it", func(t *testing.T) {
+		cache := NewCache()
+		value := []byte("hey leslie")
+		key := "greeting"
+		cache.Set(key, value, util.ZeroTime())
+
+		gotValue, isValidItem := cache.Get(key)
+
+		assertItemValid(t, isValidItem)
+		assertItemValue(t, gotValue, value)
+	})
+
+	t.Run("set an item in the cache then get it after it expires", func(t *testing.T) {
 		cache := NewCache()
 		value := []byte("hi rob")
 		key := "greeting"
