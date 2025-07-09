@@ -32,9 +32,8 @@ const retrievalTextLine = "VALUE %s %d \r\n"
 
 type Command interface {
 	// gets the bytes reponse of the command in the format dictated by the
-	// memcached protocol.
-	// See https://raw.githubusercontent.com/memcached/memcached/refs/heads/master/doc/protocol.txt
-	// for a reference on the memcached protocol.
+	// memcached protocol. For a reference on the memcached protocol, see
+	// https://raw.githubusercontent.com/memcached/memcached/refs/heads/master/doc/protocol.txt
 	Resolve(*Cache) []byte
 }
 
@@ -74,7 +73,7 @@ type Get struct {
 }
 
 func (cmd *Get) Resolve(cache *Cache) []byte {
-	// TODO: there might be a more efficient way of doing this in both cases by 
+	// TODO: there might be a more efficient way of doing this in both cases by
 	// fetching the items, determining the total response size, then pre-allocating
 	// a byte slice of the right length.
 	result := &bytes.Buffer{}
