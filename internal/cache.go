@@ -13,6 +13,8 @@ type cacheItem struct {
 	expiresAt time.Time
 }
 
+// expiration time to use if you want to create a cache item
+// that is never expired
 func NeverExpires() time.Time {
 	// Zero time represents an item that never expires
 	return time.Time{}

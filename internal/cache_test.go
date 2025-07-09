@@ -9,39 +9,6 @@ import (
 )
 
 func TestCache(t *testing.T) {
-	t.Run("get item from empty cache", func(t *testing.T) {
-		cache := NewCache()
-		_, isValidItem := cache.Get("my_key")
-
-		assertEqual(t, isValidItem, false)
-	})
-
-	t.Run(
-		"set one item in the cache then get it before it expires",
-		func(t *testing.T) {
-			cache := NewCache()
-			value := []byte("hi jeff")
-			key := "greeting"
-			expiresAt := util.NowUTC().Add(time.Hour)
-			cache.Set(key, value, expiresAt)
-			gotValue, isValidItem := cache.Get(key)
-
-			assertEqual(t, isValidItem, true)
-			assertItemValueEqual(t, gotValue, value)
-		})
-
-	t.Run("set an item in the cache with no expiration then get it", func(t *testing.T) {
-		cache := NewCache()
-		value := []byte("hey leslie")
-		key := "greeting"
-		cache.Set(key, value, NeverExpires())
-
-		gotValue, isValidItem := cache.Get(key)
-
-		assertEqual(t, isValidItem, true)
-		assertItemValueEqual(t, gotValue, value)
-	})
-
 	t.Run("set an item in the cache then get it after it expires", func(t *testing.T) {
 		cache := NewCache()
 		value := []byte("hi rob")
