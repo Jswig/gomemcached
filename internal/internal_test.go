@@ -117,28 +117,34 @@ func TestCommand(t *testing.T) {
 		assertStringsEqual(t, got, want)
 	})
 
-	// t.Run("replace a key not yet in cache", func(t *testing.T) {
-	// 	cache := NewCache()
-	// 	key := "greeting"
-	// 	value := []byte("hello, brother")
+	t.Run("replace a key not yet in cache", func(t *testing.T) {
+		cache := NewCache()
+		key := "greeting"
+		value := []byte("hello, brother")
 
-	// 	wasReplaced := cache.Replace(key, value, NeverExpires())
-	// 	assertEqual(t, wasReplaced, false)
-	// })
+		cmdReplace := Replace{key, value, NeverExpires()}
+		got := string(cmdReplace.Resolve(cache))
+		assertStringsEqual(t, got, storageNotStored)
+	})
 
-	// t.Run("replace a key already in cache", func(t *testing.T) {
-	// 	cache := NewCache()
-	// 	key := "greeting"
-	// 	value1 := []byte("hello, brother")
-	// 	value2 := []byte("hellow, sister")
+	t.Run("replace a key already in cache", func(t *testing.T) {
+		cache := NewCache()
+		key := "greeting"
+		value1 := []byte("hello, brother")
+		value2 := []byte("hellow, sister")
 
-	// 	cache.Set(key, value1, NeverExpires())
-	// 	wasReplaced := cache.Replace(key, value2, NeverExpires())
-	// 	assertEqual(t, wasReplaced, true)
+		cmdSet := Set{key, value1, NeverExpires()}
+		cmdSet.Resolve(cache)
+		cmdReplace := Replace{key, value2, NeverExpires()}
+		got := string(cmdReplace.Resolve(cache))
+		assertStringsEqual(t, got, storageStored)
 
-	// 	gotValue, _ := cache.Get(key)
-	// 	assertItemValueEqual(t, gotValue, value2)
-	// })
+		cmdGet := Get{keys: []string{key}}
+		got = string(cmdGet.Resolve(cache))
+
+		want := "VALUE greeting 14 \r\nhellow, sister\r\nEND\r\n"
+		assertStringsEqual(t, got, want)
+	})
 }
 
 func assertStringsEqual(t *testing.T, got string, want string) {
