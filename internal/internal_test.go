@@ -24,7 +24,7 @@ func TestCommand(t *testing.T) {
 			value := []byte("hi jeff")
 			key := "greeting"
 			expiresAt := util.NowUTC().Add(time.Hour)
-			cmdSet := Set{key: key, value: value, expiresAt: expiresAt}
+			cmdSet := Set{key, value, expiresAt}
 			cmdSet.Resolve(cache)
 
 			cmdGet := Get{keys: []string{"greeting"}}
@@ -37,11 +37,31 @@ func TestCommand(t *testing.T) {
 			assertStringsEqual(t, got, want)
 		},
 	)
+
+	t.Run("set an item in the cache then get it after it expires", func(t *testing.T) {
+		cache := NewCache()
+		value := []byte("hi rob")
+		key := "greeting"
+		expiresIn := time.Millisecond
+		expiresAt := util.NowUTC().Add(expiresIn)
+
+		cmdSet := Set{key, value, expiresAt}
+		cmdSet.Resolve(cache)
+
+		cmdGet := Get{keys: []string{key}}
+		// sleep to make sure the cache expires
+		time.Sleep(10 * expiresIn)
+		got := string(cmdGet.Resolve(cache))
+
+		want := retrievalEnd
+		assertStringsEqual(t, got, want)
+	})
+
 	t.Run("set an item in the cache with no expiration then get it", func(t *testing.T) {
 		cache := NewCache()
 		value := []byte("hey leslie")
 		key := "greeting"
-		cmdSet := Set{key: key, value: value, expiresAt: NeverExpires()}
+		cmdSet := Set{key, value, NeverExpires()}
 		cmdSet.Resolve(cache)
 
 		cmdGet := Get{keys: []string{key}}
@@ -52,6 +72,80 @@ func TestCommand(t *testing.T) {
 			retrievalEnd)
 		assertStringsEqual(t, got, want)
 	})
+
+	t.Run("set one item in cache, set it again then get it", func(t *testing.T) {
+		cache := NewCache()
+		value1 := []byte("hi clara")
+		key := "greeting"
+		value2 := []byte("hi bradley")
+
+		cmdSet := Set{key, value1, NeverExpires()}
+		cmdSet.Resolve(cache)
+		cmdSet = Set{key, value2, NeverExpires()}
+		cmdSet.Resolve(cache)
+
+		cmdGet := Get{keys: []string{key}}
+		got := string(cmdGet.Resolve(cache))
+
+		want := (fmt.Sprintf(retrievalTextLine, key, len(value2)) +
+			string(value2) + "\r\n" +
+			retrievalEnd)
+		assertStringsEqual(t, got, want)
+	})
+
+	t.Run("add a key not yet in the cache", func(t *testing.T) {
+		cache := NewCache()
+		key := "greeting"
+		value := []byte("hello, friend")
+
+		cmdAdd := Add{key, value, NeverExpires()}
+		got := string(cmdAdd.Resolve(cache))
+		assertStringsEqual(t, got, storageStored)
+
+		cmdGet := Get{keys: []string{key}}
+		got = string(cmdGet.Resolve(cache))
+		want := (fmt.Sprintf(retrievalTextLine, key, len(value)) +
+			string(value) + "\r\n" +
+			retrievalEnd)
+		assertStringsEqual(t, got, want)
+	})
+
+	// t.Run("add a key aready in cache", func(t *testing.T) {
+	// 	cache := NewCache()
+	// 	key := "greeting"
+	// 	value1 := []byte("hello, fiend")
+	// 	value2 := []byte("hi, my enemy")
+
+	// 	cache.Set(key, value1, NeverExpires())
+	// 	wasAdded := cache.Add(key, value2, NeverExpires())
+	// 	assertEqual(t, wasAdded, false)
+
+	// 	gotValue, _ := cache.Get(key)
+	// 	assertItemValueEqual(t, gotValue, value1)
+	// })
+
+	// t.Run("replace a key not yet in cache", func(t *testing.T) {
+	// 	cache := NewCache()
+	// 	key := "greeting"
+	// 	value := []byte("hello, brother")
+
+	// 	wasReplaced := cache.Replace(key, value, NeverExpires())
+	// 	assertEqual(t, wasReplaced, false)
+	// })
+
+	// t.Run("replace a key already in cache", func(t *testing.T) {
+	// 	cache := NewCache()
+	// 	key := "greeting"
+	// 	value1 := []byte("hello, brother")
+	// 	value2 := []byte("hellow, sister")
+
+	// 	cache.Set(key, value1, NeverExpires())
+	// 	wasReplaced := cache.Replace(key, value2, NeverExpires())
+	// 	assertEqual(t, wasReplaced, true)
+
+	// 	gotValue, _ := cache.Get(key)
+	// 	assertItemValueEqual(t, gotValue, value2)
+	// })
 }
 
 func assertStringsEqual(t *testing.T, got string, want string) {
