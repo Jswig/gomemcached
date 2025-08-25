@@ -10,7 +10,10 @@ import (
 func TestCommand(t *testing.T) {
 	t.Run("get an item from empty cache", func(t *testing.T) {
 		cache := NewCache()
-		cmd := Get{keys: []string{"my_key"}}
+		cmd, err := ParseCommand([]byte("get greeting\r\n"))
+		if err != nil {
+			t.Error(err)
+		}
 		got := string(cmd.Resolve(cache))
 		want := retrievalEnd
 		assertStringsEqual(t, got, want)
